@@ -1,9 +1,12 @@
 package com.skillshare.skill_platform.service.Impl;
 
 
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.skillshare.skill_platform.dto.UserDTO;
 import com.skillshare.skill_platform.dto.UserProfileDTO;
@@ -51,6 +54,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserProfileDTO createOrUpdateProfile(String userId, UserProfileDTO profileDTO) {
+        // Verify user exists first
+        userRepository.findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            
         UserProfile profile = userProfileRepository.findByUserId(userId);
         if (profile == null) {
             profile = new UserProfile();
@@ -61,25 +68,39 @@ public class UserServiceImpl implements UserService {
         profile.setProfilePictureUrl(profileDTO.getProfilePictureUrl());
         userProfileRepository.save(profile);
 
-        UserProfileDTO result = new UserProfileDTO();
-        result.setId(profile.getId());
-        result.setUserId(profile.getUserId());
-        result.setBio(profile.getBio());
-        result.setProfilePictureUrl(profile.getProfilePictureUrl());
-        return result;
+        return mapToDTO(profile);
     }
 
     @Override
     public UserProfileDTO getProfile(String userId) {
+        // Verify user exists first
+        userRepository.findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            
         UserProfile profile = userProfileRepository.findByUserId(userId);
         if (profile == null) {
-            throw new RuntimeException("Profile not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found");
         }
-        UserProfileDTO result = new UserProfileDTO();
-        result.setId(profile.getId());
-        result.setUserId(profile.getUserId());
-        result.setBio(profile.getBio());
-        result.setProfilePictureUrl(profile.getProfilePictureUrl());
-        return result;
+        
+        return mapToDTO(profile);
+    }
+    
+    @Override
+    public void deleteProfile(String userId) {
+        UserProfile profile = userProfileRepository.findByUserId(userId);
+        if (profile != null) {
+            userProfileRepository.delete(profile);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found");
+        }
+    }
+    
+    private UserProfileDTO mapToDTO(UserProfile profile) {
+        UserProfileDTO dto = new UserProfileDTO();
+        dto.setId(profile.getId());
+        dto.setUserId(profile.getUserId());
+        dto.setBio(profile.getBio());
+        dto.setProfilePictureUrl(profile.getProfilePictureUrl());
+        return dto;
     }
 }

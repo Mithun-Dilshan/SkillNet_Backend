@@ -1,6 +1,5 @@
+
 package com.skillshare.skill_platform.service;
-
-
 
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 
@@ -11,4 +10,5 @@ public interface UserService {
     UserDTO handleOAuthLogin(OAuth2AuthenticationToken authentication);
     UserProfileDTO createOrUpdateProfile(String userId, UserProfileDTO profileDTO);
     UserProfileDTO getProfile(String userId);
+    void deleteProfile(String userId);
 }

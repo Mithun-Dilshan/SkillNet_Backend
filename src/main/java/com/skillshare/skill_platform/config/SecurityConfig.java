@@ -18,6 +18,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/users/**").permitAll() // Allow public access to user endpoints for testing
+                .requestMatchers("/api/auth/**").permitAll() // Also allow auth endpoints
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
@@ -25,7 +26,9 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutSuccessUrl("/api/public/logout").permitAll()
-            );
+            )
+            .csrf(csrf -> csrf.disable()); // Disable CSRF for API testing
+
         return http.build();
     }
 }
