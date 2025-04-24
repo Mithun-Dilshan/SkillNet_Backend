@@ -6,7 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -22,8 +22,8 @@ public class Post {
 
     private String url;
 
-    private List<Comment> comments;
-    private List<Like> likes;
+    private List<Comment> comments = new ArrayList<>();
+    private List<Like> likes = new ArrayList<>();
 
     @CreatedDate
     private Date date;

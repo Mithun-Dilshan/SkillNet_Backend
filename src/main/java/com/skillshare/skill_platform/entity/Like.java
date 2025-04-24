@@ -6,8 +6,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 
+@Document(collection = "likes")
 @Data
-@Document(collection = "post")
 public class Like {
     @Id
     private String id;

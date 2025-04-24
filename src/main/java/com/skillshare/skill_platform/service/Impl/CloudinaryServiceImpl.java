@@ -27,12 +27,12 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             String publicId = (String) uploadedFile.get("public_id");
             String format = (String) uploadedFile.get("format");  
 
-            /
+            // Check if the uploaded file is a video
             if ("video".equals(uploadedFile.get("resource_type"))) {
-              
+                // Return video URL
                 return cloudinary.url().resourceType("video").format(format).secure(true).generate(publicId);
             } else {
-               
+                // Return image URL
                 return cloudinary.url().secure(true).generate(publicId);
             }
 

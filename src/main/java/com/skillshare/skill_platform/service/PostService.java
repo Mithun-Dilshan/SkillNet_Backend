@@ -11,4 +11,6 @@ public interface PostService {
     ResponseEntity<Map> getAllPosts();
     public ResponseEntity<Map> updatePost(String postId, PostRequest postRequest);
     public ResponseEntity<Map> deletePost(String postId);
+    ResponseEntity<Map> likePost(String postId, String userId);
+    ResponseEntity<Map> unlikePost(String postId, String userId);
 } 
