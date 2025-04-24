@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,10 +21,10 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public Comment createComment(String postId, CommentRequest commentRequest) {
         Comment newComment = new Comment();
-        newComment.setPostid(postId);
-        newComment.setText(commentRequest.getText());
-        newComment.setUid(commentRequest.getUid());
-        newComment.setUname(commentRequest.getUname());
+        newComment.setPostId(postId);
+        newComment.setContent(commentRequest.getContent());
+        newComment.setUserId(commentRequest.getUserId());
+        newComment.setCreatedAt(new Date());
         return commentRepository.save(newComment);
     }
 
@@ -33,7 +34,7 @@ public class CommentServiceImpl implements CommentService {
         List<Comment> commentsForPost = new ArrayList<>();
 
         for (Comment comment : allComments) {
-            if (comment.getPostid().equals(postId)) {
+            if (comment.getPostId().equals(postId)) {
                 commentsForPost.add(comment);
             }
         }
@@ -47,8 +48,8 @@ public class CommentServiceImpl implements CommentService {
         if (optionalComment.isPresent()) {
             Comment comment = optionalComment.get();
            
-            if (comment.getUid().equals(userId)) {
-                comment.setText(commentRequest.getText());
+            if (comment.getUserId().equals(userId)) {
+                comment.setContent(commentRequest.getContent());
                 commentRepository.save(comment);
                 return true;
             }
@@ -62,7 +63,7 @@ public class CommentServiceImpl implements CommentService {
         if (optionalComment.isPresent()) {
             Comment comment = optionalComment.get();
            
-            if (comment.getUid().equals(userId)) {
+            if (comment.getUserId().equals(userId)) {
                 commentRepository.delete(comment);
                 return true; 
             }

@@ -6,18 +6,27 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final CorsFilter corsFilter;
+
+    public SecurityConfig(CorsFilter corsFilter) {
+        this.corsFilter = corsFilter;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)  // Disable CSRF for API endpoints
-            .cors(cors -> cors.configure(http))     // Enable CORS
+            .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class) // Add CORS filter
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()  // Allow authentication endpoints
                 .requestMatchers("/api/users/**").permitAll() // Allow public access to user endpoints for testing
                 // Post endpoints
                 .requestMatchers(
@@ -38,6 +47,7 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutSuccessUrl("/api/public/logout").permitAll()
             );
+
         return http.build();
     }
 }
