@@ -21,7 +21,7 @@ public class LearningPlanController {
 
   private LearningPlanService learningPlanService;
 
-  @PostMapping("users/{user-id}/learning-plans")
+  @PostMapping("/users/{user-id}/learning-plans")
   public LearningPlan create(@RequestBody LearningPlanRQ rq,
       @PathVariable("user-id") String userId) {
     return learningPlanService.create(rq, userId);
