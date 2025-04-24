@@ -2,6 +2,7 @@ package com.skillshare.skill_platform.service.Impl;
 
 import com.skillshare.skill_platform.dto.LearningPlanRQ;
 import com.skillshare.skill_platform.dto.LearningPlanResponse;
+import com.skillshare.skill_platform.dto.TopicRq;
 import com.skillshare.skill_platform.entity.LearningPlan;
 import com.skillshare.skill_platform.entity.Topic;
 import com.skillshare.skill_platform.exception.ResourceNotFoundException;
@@ -9,6 +10,7 @@ import com.skillshare.skill_platform.repository.LearningPlanRepository;
 import com.skillshare.skill_platform.service.LearningPlanService;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,14 @@ public class LearningPlanServiceImpl implements LearningPlanService {
     LearningPlan learningPlan = new LearningPlan();
     BeanUtils.copyProperties(rq, learningPlan);
     learningPlan.setCreatedAt(LocalDateTime.now());
+    List<Topic> topics = rq.getTopics().stream()
+        .map(topicRq -> {
+          Topic topic = new Topic();
+          BeanUtils.copyProperties(topicRq, topic);
+          return topic;
+        })
+        .collect(Collectors.toList());
+    learningPlan.setTopics(topics);
     learningPlan.setUserId(rq.getUserId());
     return learningPlanRepository.save(learningPlan);
   }
@@ -40,10 +50,15 @@ public class LearningPlanServiceImpl implements LearningPlanService {
             .stream(learningPlan.getStream())
             .createdAt(learningPlan.getCreatedAt())
             .userId(learningPlan.getUserId())
-            .topicIds(
+            .topics(
                 learningPlan.getTopics() != null
                     ? learningPlan.getTopics().stream()
-                    .map(Topic::getId)
+                    .map(topic -> {
+                      TopicRq topicRq = new TopicRq();
+                      topicRq.setName(topic.getName());
+                      topicRq.setStatus(topic.getStatus());
+                      return topicRq;
+                    })
                     .toList()
                     : List.of()
             )
@@ -67,10 +82,15 @@ public class LearningPlanServiceImpl implements LearningPlanService {
             .stream(learningPlan.getStream())
             .createdAt(learningPlan.getCreatedAt())
             .userId(learningPlan.getUserId())
-            .topicIds(
+            .topics(
                 learningPlan.getTopics() != null
                     ? learningPlan.getTopics().stream()
-                    .map(Topic::getId)
+                    .map(topic -> {
+                      TopicRq topicRq = new TopicRq();
+                      topicRq.setName(topic.getName());
+                      topicRq.setStatus(topic.getStatus());
+                      return topicRq;
+                    })
                     .toList()
                     : List.of()
             )

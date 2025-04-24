@@ -14,6 +14,6 @@ public class LearningPlanResponse {
   private String learningPlanDescription;
   private String stream;
   private LocalDateTime createdAt;
-  private List<String> topicIds;
+  private List<TopicRq> topics;
   private String userId;
 }
