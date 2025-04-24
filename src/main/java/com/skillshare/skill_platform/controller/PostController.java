@@ -45,4 +45,14 @@ public class PostController {
     public ResponseEntity<Map> deletePost(@PathVariable String postId) {
         return postService.deletePost(postId);
     }
+
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<Map> likePost(@PathVariable String postId, @RequestParam String userId) {
+        return postService.likePost(postId, userId);
+    }
+
+    @DeleteMapping("/{postId}/like")
+    public ResponseEntity<Map> unlikePost(@PathVariable String postId, @RequestParam String userId) {
+        return postService.unlikePost(postId, userId);
+    }
 } 
