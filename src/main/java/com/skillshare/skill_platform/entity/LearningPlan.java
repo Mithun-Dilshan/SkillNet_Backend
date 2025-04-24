@@ -1,6 +1,7 @@
 package com.skillshare.skill_platform.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -16,6 +17,6 @@ public class LearningPlan {
   private String learningPlanDescription;
   private String stream;
   private LocalDateTime createdAt;
-  private List<Topic> topics;
+  private List<Topic> topics = new ArrayList<>();
   private String userId;
 }
