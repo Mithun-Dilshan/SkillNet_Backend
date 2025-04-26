@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
 import java.util.List;
@@ -28,8 +29,11 @@ public class PostServiceImpl implements PostService {
     @Override
     public ResponseEntity<Map> createPost(PostRequest postRequest) {
         try {
+            System.out.println("Creating new post: " + postRequest);
+            
             if (postRequest.getDescription() == null || postRequest.getDescription().isEmpty()) {
-                return ResponseEntity.badRequest().build();
+                System.err.println("Post creation failed: Description is empty");
+                return ResponseEntity.badRequest().body(Map.of("error", "Description cannot be empty"));
             }
             
             Post post = new Post();
@@ -37,21 +41,36 @@ public class PostServiceImpl implements PostService {
             post.setDescription(postRequest.getDescription());
             
             // Only upload file if it exists
-            if (postRequest.getFile() != null && !postRequest.getFile().isEmpty()) {
-                String uploadedUrl = cloudinaryService.uploadFile(postRequest.getFile(), "folder_1");
+            MultipartFile file = postRequest.getFile();
+            if (file != null && !file.isEmpty()) {
+                System.out.println("Uploading file: " + file.getOriginalFilename() + " (" + file.getSize() + " bytes)");
+                String uploadedUrl = cloudinaryService.uploadFile(file, "posts");
+                
                 if (uploadedUrl == null) {
-                    return ResponseEntity.badRequest().build();
+                    System.err.println("Post creation failed: File upload to Cloudinary failed");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(Map.of("error", "Failed to upload image"));
                 }
+                
+                System.out.println("File upload successful, URL: " + uploadedUrl);
                 post.setUrl(uploadedUrl);
+            } else {
+                System.out.println("No file provided for upload");
             }
             
             post.setDate(new Date());
             Post savedPost = postRepository.save(post);
             
-            return ResponseEntity.ok().body(Map.of("post", savedPost));
+            System.out.println("Post created successfully with ID: " + savedPost.getId());
+            return ResponseEntity.ok().body(Map.of(
+                "message", "Post created successfully",
+                "post", savedPost
+            ));
         } catch (Exception e) {
+            System.err.println("Post creation failed with exception: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to create post: " + e.getMessage()));
         }
     }
 
@@ -87,32 +106,47 @@ public class PostServiceImpl implements PostService {
     @Override
     public ResponseEntity<Map> updatePost(String postId, PostRequest postRequest) {
         try {
+            System.out.println("Updating post with ID: " + postId);
+            
             Optional<Post> optionalPost = postRepository.findById(postId);
             if (!optionalPost.isPresent()) {
+                System.err.println("Post update failed: Post not found with ID: " + postId);
                 return ResponseEntity.notFound().build();
             }
 
             Post post = optionalPost.get();
 
-           
             if (postRequest.getDescription() != null && !postRequest.getDescription().isEmpty()) {
                 post.setDescription(postRequest.getDescription());
             }
 
-           
-            if (postRequest.getFile() != null && !postRequest.getFile().isEmpty()) {
-                String uploadedUrl = cloudinaryService.uploadFile(postRequest.getFile(), "folder_1");
+            MultipartFile file = postRequest.getFile();
+            if (file != null && !file.isEmpty()) {
+                System.out.println("Uploading new file for post update: " + file.getOriginalFilename());
+                String uploadedUrl = cloudinaryService.uploadFile(file, "posts");
+                
                 if (uploadedUrl == null) {
-                    return ResponseEntity.badRequest().build();
+                    System.err.println("Post update failed: File upload to Cloudinary failed");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(Map.of("error", "Failed to upload image"));
                 }
+                
+                System.out.println("File upload successful for post update, URL: " + uploadedUrl);
                 post.setUrl(uploadedUrl);
             }
 
-            postRepository.save(post);
-            return ResponseEntity.ok().body(Map.of("message", "Post updated successfully"));
+            Post updatedPost = postRepository.save(post);
+            System.out.println("Post updated successfully: " + updatedPost.getId());
+            
+            return ResponseEntity.ok().body(Map.of(
+                "message", "Post updated successfully",
+                "post", updatedPost
+            ));
         } catch (Exception e) {
+            System.err.println("Post update failed with exception: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to update post: " + e.getMessage()));
         }
     }
 

@@ -5,19 +5,32 @@ import com.skillshare.skill_platform.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 @RequestMapping("/api/posts")
 public class PostController {
     @Autowired
     private PostService postService;
 
-    @PostMapping("/upload")
-    public ResponseEntity<Map> upload(PostRequest postRequest) {
+    @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
+    public ResponseEntity<Map> upload(
+            @RequestParam("userId") String userId,
+            @RequestParam("description") String description,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
+            PostRequest postRequest = new PostRequest();
+            postRequest.setUserId(userId);
+            postRequest.setDescription(description);
+            postRequest.setFile(file);
+            
+            System.out.println("Received post upload request: userId=" + userId + 
+                               ", description=" + description + 
+                               ", file=" + (file != null ? file.getOriginalFilename() : "none"));
+            
             return postService.createPost(postRequest);
         } catch (Exception e) {
             e.printStackTrace();
@@ -32,12 +45,23 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<Map> getAllPosts() {
-        System.out.println("ok");
+        System.out.println("Fetching all posts");
         return postService.getAllPosts();
     }
 
-    @PutMapping("/{postId}")
-    public ResponseEntity<Map> updatePost(@PathVariable String postId, @RequestBody PostRequest postRequest) {
+    @PutMapping(value = "/{postId}", consumes = {"multipart/form-data"})
+    public ResponseEntity<Map> updatePost(
+            @PathVariable String postId,
+            @RequestParam(value = "userId", required = false) String userId,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        
+        PostRequest postRequest = new PostRequest();
+        postRequest.setUserId(userId);
+        postRequest.setDescription(description);
+        postRequest.setFile(file);
+        
+        System.out.println("Updating post: " + postId);
         return postService.updatePost(postId, postRequest);
     }
 

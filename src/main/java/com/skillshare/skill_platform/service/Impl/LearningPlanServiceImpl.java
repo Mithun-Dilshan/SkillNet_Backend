@@ -161,7 +161,7 @@ public class LearningPlanServiceImpl implements LearningPlanService {
   private LearningPlanResponse mapToResponse(LearningPlan learningPlan) {
     try {
       // Build response with available data even if user is not found
-      LearningPlanResponse.Builder responseBuilder = LearningPlanResponse.builder()
+      LearningPlanResponse response = LearningPlanResponse.builder()
           .id(learningPlan.getId())
           .title(learningPlan.getTitle())
           .description(learningPlan.getDescription())
@@ -173,7 +173,8 @@ public class LearningPlanServiceImpl implements LearningPlanService {
           .followers(learningPlan.getFollowers())
           .userId(learningPlan.getUserId())
           .following(learningPlan.getFollowing())
-          .completionPercentage(learningPlan.getCompletionPercentage());
+          .completionPercentage(learningPlan.getCompletionPercentage())
+          .build(); // Build the initial response
     
       // Try to get user information, but continue even if not found
       try {
@@ -191,7 +192,22 @@ public class LearningPlanServiceImpl implements LearningPlanService {
                 .profilePicture(userProfile != null ? userProfile.getProfilePictureUrl() : null)
                 .build();
                 
-            responseBuilder.user(userDTO);
+            // Create a new response with the user information
+            response = LearningPlanResponse.builder()
+                .id(response.getId())
+                .title(response.getTitle())
+                .description(response.getDescription())
+                .subject(response.getSubject())
+                .createdAt(response.getCreatedAt())
+                .topics(response.getTopics())
+                .resources(response.getResources())
+                .estimatedDays(response.getEstimatedDays())
+                .followers(response.getFollowers())
+                .userId(response.getUserId())
+                .following(response.getFollowing())
+                .completionPercentage(response.getCompletionPercentage())
+                .user(userDTO)
+                .build();
           } else {
             // Create a placeholder user if not found
             UserDTO placeholderUser = UserDTO.builder()
@@ -200,7 +216,22 @@ public class LearningPlanServiceImpl implements LearningPlanService {
                 .username("unknown@example.com")
                 .build();
                 
-            responseBuilder.user(placeholderUser);
+            // Create a new response with the placeholder user
+            response = LearningPlanResponse.builder()
+                .id(response.getId())
+                .title(response.getTitle())
+                .description(response.getDescription())
+                .subject(response.getSubject())
+                .createdAt(response.getCreatedAt())
+                .topics(response.getTopics())
+                .resources(response.getResources())
+                .estimatedDays(response.getEstimatedDays())
+                .followers(response.getFollowers())
+                .userId(response.getUserId())
+                .following(response.getFollowing())
+                .completionPercentage(response.getCompletionPercentage())
+                .user(placeholderUser)
+                .build();
             System.out.println("User not found for learning plan ID: " + learningPlan.getId() + ", using placeholder");
           }
         }
@@ -213,10 +244,25 @@ public class LearningPlanServiceImpl implements LearningPlanService {
             .username("unknown@example.com")
             .build();
             
-        responseBuilder.user(placeholderUser);
+        // Create a new response with the placeholder user
+        response = LearningPlanResponse.builder()
+            .id(response.getId())
+            .title(response.getTitle())
+            .description(response.getDescription())
+            .subject(response.getSubject())
+            .createdAt(response.getCreatedAt())
+            .topics(response.getTopics())
+            .resources(response.getResources())
+            .estimatedDays(response.getEstimatedDays())
+            .followers(response.getFollowers())
+            .userId(response.getUserId())
+            .following(response.getFollowing())
+            .completionPercentage(response.getCompletionPercentage())
+            .user(placeholderUser)
+            .build();
       }
       
-      return responseBuilder.build();
+      return response;
     } catch (Exception e) {
       System.err.println("Error mapping learning plan to response: " + e.getMessage());
       throw e;

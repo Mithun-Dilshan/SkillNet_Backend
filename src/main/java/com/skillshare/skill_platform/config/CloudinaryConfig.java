@@ -3,27 +3,27 @@ package com.skillshare.skill_platform.config;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnProperty(name = "cloudinary.enabled", havingValue = "true", matchIfMissing = false)
 public class CloudinaryConfig {
-    @Value("${cloudinary.cloud_name:dummy}")
+    @Value("${cloudinary.cloud_name}")
     private String cloudName;
 
-    @Value("${cloudinary.api_key:dummy}")
+    @Value("${cloudinary.api_key}")
     private String apiKey;
 
-    @Value("${cloudinary.api_secret:dummy}")
+    @Value("${cloudinary.api_secret}")
     private String apiSecret;
 
     @Bean
     public Cloudinary cloudinary() {
+        System.out.println("Configuring Cloudinary with cloud name: " + cloudName);
         return new Cloudinary(ObjectUtils.asMap(
                 "cloud_name", cloudName,
                 "api_key", apiKey,
-                "api_secret", apiSecret));
+                "api_secret", apiSecret,
+                "secure", true));
     }
 } 

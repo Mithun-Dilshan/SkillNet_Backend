@@ -3,8 +3,6 @@ package com.skillshare.skill_platform.service.Impl;
 import com.cloudinary.Cloudinary;
 import com.skillshare.skill_platform.service.CloudinaryService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,44 +12,50 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-@ConditionalOnProperty(name = "cloudinary.enabled", havingValue = "true", matchIfMissing = true)
 public class CloudinaryServiceImpl implements CloudinaryService {
 
-    @Autowired(required = false)
+    @Autowired
     private Cloudinary cloudinary;
-    
-    @Value("${cloudinary.enabled:false}")
-    private boolean cloudinaryEnabled;
 
     @Override
     public String uploadFile(MultipartFile file, String folderName) {
-        // If Cloudinary is disabled, return a mock URL
-        if (!cloudinaryEnabled || cloudinary == null) {
-            // Generate a random file name for development
-            String fileName = UUID.randomUUID().toString();
-            String extension = getFileExtension(file.getOriginalFilename());
-            return "https://mock-cloudinary-url.com/" + folderName + "/" + fileName + "." + extension;
+        if (file == null || file.isEmpty()) {
+            System.out.println("File is null or empty, cannot upload to Cloudinary");
+            return null;
         }
         
         try {
-            HashMap<Object, Object> options = new HashMap<>();
+            System.out.println("Attempting to upload file to Cloudinary, size: " + file.getSize() + " bytes");
+            
+            HashMap<String, Object> options = new HashMap<>();
             options.put("folder", folderName);
             options.put("resource_type", "auto"); 
+            options.put("unique_filename", true);
 
             Map<String, Object> uploadedFile = cloudinary.uploader().upload(file.getBytes(), options);
+            
+            System.out.println("Successfully uploaded to Cloudinary, response: " + uploadedFile);
+            
             String publicId = (String) uploadedFile.get("public_id");
-            String format = (String) uploadedFile.get("format");  
+            String format = (String) uploadedFile.get("format");
+            String secureUrl = (String) uploadedFile.get("secure_url");
 
-            // Check if the uploaded file is a video
+            // If secure_url is present, use it directly
+            if (secureUrl != null && !secureUrl.isEmpty()) {
+                return secureUrl;
+            }
+
+            // Otherwise, construct the URL
             if ("video".equals(uploadedFile.get("resource_type"))) {
                 // Return video URL
                 return cloudinary.url().resourceType("video").format(format).secure(true).generate(publicId);
             } else {
                 // Return image URL
-                return cloudinary.url().secure(true).generate(publicId);
+                return cloudinary.url().secure(true).format(format).generate(publicId);
             }
 
         } catch (IOException e) {
+            System.err.println("Error uploading file to Cloudinary: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
