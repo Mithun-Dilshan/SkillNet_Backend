@@ -9,4 +9,5 @@ public class UserProfileDTO {
     private String userId;
     private String bio;
     private String profilePictureUrl;
+    private String fullName;
 }

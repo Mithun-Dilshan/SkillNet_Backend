@@ -1,8 +1,6 @@
 package com.skillshare.skill_platform.service.Impl;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import com.skillshare.skill_platform.dto.UserDTO;
@@ -23,30 +21,22 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserProfileRepository userProfileRepository;
-
+    
     @Override
-    public UserDTO handleOAuthLogin(OAuth2AuthenticationToken authentication) {
-        String email = authentication.getPrincipal().getAttribute("email");
-        String name = authentication.getPrincipal().getAttribute("name");
-        String provider = authentication.getAuthorizedClientRegistrationId();
-        String oauthId = authentication.getPrincipal().getAttribute("sub");
-
-        User user = userRepository.findByEmail(email)
+    public User findOrCreateUserByEmail(String email) {
+        return userRepository.findByEmail(email)
                 .orElseGet(() -> {
                     User newUser = new User();
                     newUser.setId(UUID.randomUUID().toString());
                     newUser.setEmail(email);
-                    newUser.setName(name);
-                    newUser.setOauthProvider(provider);
-                    newUser.setOauthId(oauthId);
+                    newUser.setName(email.split("@")[0]); // Use part of email as name
                     return userRepository.save(newUser);
                 });
-
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(user.getId());
-        userDTO.setEmail(user.getEmail());
-        userDTO.setName(user.getName());
-        return userDTO;
+    }
+    
+    @Override
+    public User findUserById(String userId) {
+        return userRepository.findById(userId).orElse(null);
     }
 
     @Override
@@ -59,13 +49,25 @@ public class UserServiceImpl implements UserService {
         }
         profile.setBio(profileDTO.getBio());
         profile.setProfilePictureUrl(profileDTO.getProfilePictureUrl());
+        
+        if (profileDTO.getFullName() != null) {
+            profile.setFullName(profileDTO.getFullName());
+        }
+        
         userProfileRepository.save(profile);
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user != null) {
+            user.setUserProfile(profile);
+            userRepository.save(user);
+        }
 
         UserProfileDTO result = new UserProfileDTO();
         result.setId(profile.getId());
         result.setUserId(profile.getUserId());
         result.setBio(profile.getBio());
         result.setProfilePictureUrl(profile.getProfilePictureUrl());
+        result.setFullName(profile.getFullName());
         return result;
     }
 
@@ -80,6 +82,7 @@ public class UserServiceImpl implements UserService {
         result.setUserId(profile.getUserId());
         result.setBio(profile.getBio());
         result.setProfilePictureUrl(profile.getProfilePictureUrl());
+        result.setFullName(profile.getFullName());
         return result;
     }
 }

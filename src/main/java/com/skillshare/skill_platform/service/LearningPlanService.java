@@ -12,8 +12,14 @@ public interface LearningPlanService {
   List<LearningPlanResponse> getAll();
 
   List<LearningPlanResponse> getById(String userId);
+  
+  LearningPlanResponse getByPlanId(String planId);
 
   LearningPlan updateById(String userId, LearningPlanRQ rq, String learningPlanId);
 
   void delete(String userId, String learningPlanId);
+  
+  LearningPlanResponse followPlan(String planId, String userId);
+  
+  LearningPlanResponse unfollowPlan(String planId, String userId);
 }

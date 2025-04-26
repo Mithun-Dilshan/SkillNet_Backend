@@ -1,29 +1,48 @@
 package com.skillshare.skill_platform.config;
 
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 
 import javax.annotation.PostConstruct;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 @Configuration
+@ConditionalOnProperty(name = "firebase.enabled", havingValue = "true", matchIfMissing = false)
 public class FirebaseConfig {
 
     @PostConstruct
-    public void initialize() throws IOException {
-        FileInputStream serviceAccount = new FileInputStream("src/main/resources/firebase-service-account.json");
+    public void initialize() {
+        try {
+            // Try to find the file in classpath first
+            ClassPathResource resource = new ClassPathResource("firebase-service-account.json");
+            InputStream serviceAccount;
+            
+            if (resource.exists()) {
+                serviceAccount = resource.getInputStream();
+            } else {
+                // Fall back to file system
+                serviceAccount = new FileInputStream("src/main/resources/firebase-service-account.json");
+            }
 
-        FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .setStorageBucket("skillshare-platform.appspot.com")
-                .build();
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .setStorageBucket("skillshare-platform.appspot.com")
+                    .build();
 
-        if (FirebaseApp.getApps().isEmpty()) {
-            FirebaseApp.initializeApp(options);
+            if (FirebaseApp.getApps().isEmpty()) {
+                FirebaseApp.initializeApp(options);
+            }
+            
+            serviceAccount.close();
+        } catch (IOException e) {
+            System.err.println("Failed to initialize Firebase: " + e.getMessage());
+            // Continue without Firebase
         }
     }
 }
