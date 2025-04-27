@@ -7,5 +7,5 @@ public class Resource {
     private String id;
     private String title;
     private String url;
-    private String type; // 'link', 'document', 'video', etc.
+    private String type;
 } 

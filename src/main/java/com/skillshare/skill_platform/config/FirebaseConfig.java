@@ -19,14 +19,12 @@ public class FirebaseConfig {
     @PostConstruct
     public void initialize() {
         try {
-            // Try to find the file in classpath first
             ClassPathResource resource = new ClassPathResource("firebase-service-account.json");
             InputStream serviceAccount;
             
             if (resource.exists()) {
                 serviceAccount = resource.getInputStream();
             } else {
-                // Fall back to file system
                 serviceAccount = new FileInputStream("src/main/resources/firebase-service-account.json");
             }
 
@@ -42,7 +40,6 @@ public class FirebaseConfig {
             serviceAccount.close();
         } catch (IOException e) {
             System.err.println("Failed to initialize Firebase: " + e.getMessage());
-            // Continue without Firebase
         }
     }
 }

@@ -4,6 +4,7 @@ import com.skillshare.skill_platform.dto.LearningPlanRQ;
 import com.skillshare.skill_platform.dto.LearningPlanResponse;
 import com.skillshare.skill_platform.dto.UserDTO;
 import com.skillshare.skill_platform.entity.LearningPlan;
+import com.skillshare.skill_platform.entity.Topic;
 import com.skillshare.skill_platform.entity.User;
 import com.skillshare.skill_platform.entity.UserProfile;
 import com.skillshare.skill_platform.exception.ResourceNotFoundException;
@@ -39,7 +40,6 @@ public class LearningPlanServiceImpl implements LearningPlanService {
     try {
       System.out.println("Starting to fetch all learning plans...");
       
-      // Get all learning plans from repository
       List<LearningPlan> learningPlans = learningPlanRepository.findAll();
       System.out.println("Database query completed. Found " + learningPlans.size() + " learning plans");
       
@@ -48,7 +48,6 @@ public class LearningPlanServiceImpl implements LearningPlanService {
         return new ArrayList<>();
       }
       
-      // Map entities to response DTOs with user information
       System.out.println("Mapping learning plans to response DTOs...");
       List<LearningPlanResponse> responses = new ArrayList<>();
       
@@ -57,7 +56,6 @@ public class LearningPlanServiceImpl implements LearningPlanService {
           LearningPlanResponse response = mapToResponse(plan);
           responses.add(response);
         } catch (Exception e) {
-          // Log error but continue processing other items
           System.err.println("Error mapping learning plan with ID " + plan.getId() + ": " + e.getMessage());
         }
       }
@@ -116,8 +114,33 @@ public class LearningPlanServiceImpl implements LearningPlanService {
             () -> new ResourceNotFoundException(
                 "Not found learning plan with id: " + learningPlanId));
 
+    // Save the original userId to ensure it's not overwritten
+    String originalUserId = learningPlan.getUserId();
+    Integer originalFollowers = learningPlan.getFollowers();
+    Boolean originalFollowing = learningPlan.getFollowing();
+    
+    // Update the learning plan with the incoming data
     BeanUtils.copyProperties(rq, learningPlan);
-    learningPlan.setUserId(learningPlan.getUserId());
+    
+    // Ensure important fields are preserved
+    learningPlan.setUserId(originalUserId);
+    if (rq.getFollowers() == null) {
+      learningPlan.setFollowers(originalFollowers);
+    }
+    if (rq.getFollowing() == null) {
+      learningPlan.setFollowing(originalFollowing);
+    }
+    
+    // Process topics to ensure correct status conversion
+    if (rq.getTopics() != null) {
+      for (Topic topic : learningPlan.getTopics()) {
+        // Make sure the completed/status values are properly synchronized
+        // This ensures the boolean 'completed' field from frontend maps to TopicStatus enum
+        boolean isCompleted = topic.isCompleted();
+        topic.setCompleted(isCompleted);
+      }
+    }
+    
     return learningPlanRepository.save(learningPlan);
   }
 

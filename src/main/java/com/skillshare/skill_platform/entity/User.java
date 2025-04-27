@@ -12,13 +12,11 @@ public class User {
     private String id;
     private String email;
     private String name;
+    private String password;
     private String oauthProvider;
     private String oauthId;
     
     @DBRef
     private UserProfile userProfile;
-    
-    public UserProfile getUserProfile() {
-        return userProfile;
-    }
+
 }

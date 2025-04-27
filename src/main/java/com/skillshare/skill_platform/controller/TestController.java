@@ -11,9 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/test")
 public class TestController {
 
-    /**
-     * Simple public endpoint to test if security is disabled
-     */
     @GetMapping("/public")
     public Map<String, Object> publicEndpoint() {
         Map<String, Object> response = new HashMap<>();

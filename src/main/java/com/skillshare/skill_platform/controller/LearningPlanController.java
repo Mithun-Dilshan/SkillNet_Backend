@@ -95,7 +95,6 @@ public class LearningPlanController {
   @DeleteMapping("/learning-plans/{learning-plan-id}")
   public void deleteById(
       @PathVariable("learning-plan-id") String learningPlanId) throws ResourceNotFoundException {
-    // Using a default user ID since we're removing the check
     learningPlanService.delete("1", learningPlanId);
   }
   

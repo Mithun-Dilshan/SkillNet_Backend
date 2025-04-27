@@ -15,7 +15,5 @@ public class UserProfile {
     private String profilePictureUrl;
     private String fullName;
     
-    public String getFullName() {
-        return fullName;
-    }
+
 }

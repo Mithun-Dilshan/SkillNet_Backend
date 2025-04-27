@@ -35,7 +35,6 @@ public class UserController {
 
     @DeleteMapping("/{userId}/profile")
     public ResponseEntity<Void> deleteProfile(@PathVariable String userId) {
-        // Implement delete logic if required
         return ResponseEntity.noContent().build();
     }
 }
