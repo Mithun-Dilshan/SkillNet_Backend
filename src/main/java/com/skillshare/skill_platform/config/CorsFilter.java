@@ -28,7 +28,7 @@ public class CorsFilter implements Filter {
         System.out.println("CORS Filter: Processing request " + request.getMethod() + " " + request.getRequestURI());
         
         String origin = request.getHeader("Origin");
-        if (origin != null && (origin.equals("http://localhost:5173") || origin.equals("http://localhost:3000"))) {
+        if (origin != null && (origin.equals("http://localhost:5173") || origin.equals("http://localhost:3000") || origin.equals("http://localhost:5174"))) {
             response.setHeader("Access-Control-Allow-Origin", origin);
         } else {
             response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");

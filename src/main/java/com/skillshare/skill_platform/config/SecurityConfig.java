@@ -45,8 +45,7 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers("/api/auth/**", "/api/oauth2/**", "/oauth2/**", "/login/oauth2/code/*").permitAll()
                 .requestMatchers("/api/user/register", "/api/user/login").permitAll()
-                // Make all main endpoints public for now
-                .requestMatchers("/api/posts/**").permitAll()
+=                .requestMatchers("/api/posts/**").permitAll()
                 .requestMatchers("/api/comments/**").permitAll()
                 .requestMatchers("/api/user/**").permitAll()
                 .requestMatchers("/api/resources/**").permitAll()
@@ -57,6 +56,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/comments/public/**").permitAll()
                 .requestMatchers("/api/resources/public/**").permitAll()
                 .requestMatchers("/api/topics/public/**").permitAll()
+                 .requestMatchers("/api/learning-plans/**").permitAll()
 
 
                 .anyRequest().authenticated()
@@ -74,7 +74,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173", "http://localhost:5174"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization", "Content-Type", "Access-Control-Allow-Origin"));
