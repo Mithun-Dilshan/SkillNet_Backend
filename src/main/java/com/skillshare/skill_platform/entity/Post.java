@@ -24,6 +24,7 @@ public class Post {
 
     private List<Comment> comments = new ArrayList<>();
     private List<Like> likes = new ArrayList<>();
+    private List<String> savedByUsers = new ArrayList<>();
 
     @CreatedDate
     private Date date;

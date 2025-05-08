@@ -79,4 +79,16 @@ public class PostController {
     public ResponseEntity<Map> unlikePost(@PathVariable String postId, @RequestParam String userId) {
         return postService.unlikePost(postId, userId);
     }
+    
+    @PostMapping("/{postId}/save")
+    public ResponseEntity<Map> savePost(@PathVariable String postId, @RequestParam String userId) {
+        System.out.println("Saving post: " + postId + " for user: " + userId);
+        return postService.savePost(postId, userId);
+    }
+    
+    @DeleteMapping("/{postId}/save")
+    public ResponseEntity<Map> unsavePost(@PathVariable String postId, @RequestParam String userId) {
+        System.out.println("Unsaving post: " + postId + " for user: " + userId);
+        return postService.unsavePost(postId, userId);
+    }
 } 

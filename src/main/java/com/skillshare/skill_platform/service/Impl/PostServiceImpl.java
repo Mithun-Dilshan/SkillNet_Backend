@@ -16,6 +16,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Service
 public class PostServiceImpl implements PostService {
@@ -170,36 +173,36 @@ public class PostServiceImpl implements PostService {
     public ResponseEntity<Map> likePost(String postId, String userId) {
         try {
             Optional<Post> optionalPost = postRepository.findById(postId);
-            if (!optionalPost.isPresent()) {
+            if (optionalPost.isPresent()) {
+                Post post = optionalPost.get();
+                
+                // Check if user already liked this post
+                boolean alreadyLiked = post.getLikes().stream()
+                    .anyMatch(like -> like.getUserId().equals(userId));
+                
+                if (!alreadyLiked) {
+                    Like like = new Like();
+                    like.setId(UUID.randomUUID().toString());
+                    like.setPostId(postId);
+                    like.setUserId(userId);
+                    like.setCreatedAt(new Date());
+                    
+                    post.getLikes().add(like);
+                    Post updatedPost = postRepository.save(post);
+                    
+                    return ResponseEntity.ok().body(Map.of(
+                        "message", "Post liked successfully",
+                        "post", updatedPost
+                    ));
+                } else {
+                    return ResponseEntity.ok().body(Map.of(
+                        "message", "Post already liked by this user",
+                        "post", post
+                    ));
+                }
+            } else {
                 return ResponseEntity.notFound().build();
             }
-
-            Post post = optionalPost.get();
-            
-            // Check if user has already liked the post
-            boolean alreadyLiked = post.getLikes().stream()
-                .anyMatch(like -> like.getUserId().equals(userId));
-            
-            if (alreadyLiked) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("message", "User has already liked this post"));
-            }
-
-            // Create new like
-            Like like = new Like();
-            like.setPostId(postId);
-            like.setUserId(userId);
-            like.setCreatedAt(new Date());
-
-            // Add like to post
-            post.getLikes().add(like);
-            postRepository.save(post);
-
-            return ResponseEntity.ok()
-                .body(Map.of(
-                    "message", "Post liked successfully",
-                    "post", post
-                ));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -210,30 +213,121 @@ public class PostServiceImpl implements PostService {
     public ResponseEntity<Map> unlikePost(String postId, String userId) {
         try {
             Optional<Post> optionalPost = postRepository.findById(postId);
+            if (optionalPost.isPresent()) {
+                Post post = optionalPost.get();
+                
+                List<Like> updatedLikes = post.getLikes().stream()
+                    .filter(like -> !like.getUserId().equals(userId))
+                    .collect(Collectors.toList());
+                
+                post.setLikes(updatedLikes);
+                Post updatedPost = postRepository.save(post);
+                
+                return ResponseEntity.ok().body(Map.of(
+                    "message", "Post unliked successfully",
+                    "post", updatedPost
+                ));
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @Override
+    public ResponseEntity<Map> savePost(String postId, String userId) {
+        try {
+            System.out.println("Saving post with ID: " + postId + " for user: " + userId);
+            
+            Optional<Post> optionalPost = postRepository.findById(postId);
             if (!optionalPost.isPresent()) {
+                System.err.println("Post save failed: Post not found with ID: " + postId);
                 return ResponseEntity.notFound().build();
             }
 
             Post post = optionalPost.get();
             
-            // Remove like from post
-            boolean removed = post.getLikes().removeIf(like -> like.getUserId().equals(userId));
-            
-            if (!removed) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("message", "User has not liked this post"));
+            // Initialize savedByUsers if null
+            if (post.getSavedByUsers() == null) {
+                post.setSavedByUsers(new ArrayList<>());
             }
-
-            postRepository.save(post);
-
-            return ResponseEntity.ok()
-                .body(Map.of(
-                    "message", "Post unliked successfully",
+            
+            // Check if already saved by this user
+            if (!post.getSavedByUsers().contains(userId)) {
+                post.getSavedByUsers().add(userId);
+                System.out.println("Added user " + userId + " to saved list for post " + postId);
+            } else {
+                System.out.println("Post " + postId + " already saved by user " + userId);
+                return ResponseEntity.ok().body(Map.of(
+                    "message", "Post already saved by this user",
                     "post", post
                 ));
+            }
+            
+            Post updatedPost = postRepository.save(post);
+            System.out.println("Post saved successfully by user: " + userId);
+            
+            return ResponseEntity.ok().body(Map.of(
+                "message", "Post saved successfully",
+                "post", updatedPost
+            ));
         } catch (Exception e) {
+            System.err.println("Post save failed with exception: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to save post: " + e.getMessage()));
+        }
+    }
+    
+    @Override
+    public ResponseEntity<Map> unsavePost(String postId, String userId) {
+        try {
+            System.out.println("Unsaving post with ID: " + postId + " for user: " + userId);
+            
+            Optional<Post> optionalPost = postRepository.findById(postId);
+            if (!optionalPost.isPresent()) {
+                System.err.println("Post unsave failed: Post not found with ID: " + postId);
+                return ResponseEntity.notFound().build();
+            }
+
+            Post post = optionalPost.get();
+            
+            // Initialize savedByUsers if null
+            if (post.getSavedByUsers() == null) {
+                post.setSavedByUsers(new ArrayList<>());
+                System.out.println("Post " + postId + " not saved by any user");
+                return ResponseEntity.ok().body(Map.of(
+                    "message", "Post was not saved by this user",
+                    "post", post
+                ));
+            }
+            
+            // Remove the user from saved list
+            if (post.getSavedByUsers().contains(userId)) {
+                post.getSavedByUsers().remove(userId);
+                System.out.println("Removed user " + userId + " from saved list for post " + postId);
+            } else {
+                System.out.println("Post " + postId + " was not saved by user " + userId);
+                return ResponseEntity.ok().body(Map.of(
+                    "message", "Post was not saved by this user",
+                    "post", post
+                ));
+            }
+            
+            Post updatedPost = postRepository.save(post);
+            System.out.println("Post unsaved successfully by user: " + userId);
+            
+            return ResponseEntity.ok().body(Map.of(
+                "message", "Post unsaved successfully",
+                "post", updatedPost
+            ));
+        } catch (Exception e) {
+            System.err.println("Post unsave failed with exception: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to unsave post: " + e.getMessage()));
         }
     }
 } 
