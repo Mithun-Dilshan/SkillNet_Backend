@@ -16,7 +16,6 @@ public class UserProfile {
     private String profilePictureUrl;
     private String fullName;
     
-    // Activity timestamps
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime lastActiveAt = LocalDateTime.now();
 }

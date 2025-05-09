@@ -49,6 +49,12 @@ public class PostController {
         return postService.getAllPosts();
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Map> getPostsByUserId(@PathVariable String userId) {
+        System.out.println("Fetching posts for user: " + userId);
+        return postService.getPostsByUserId(userId);
+    }
+
     @PutMapping(value = "/{postId}", consumes = {"multipart/form-data"})
     public ResponseEntity<Map> updatePost(
             @PathVariable String postId,

@@ -22,10 +22,8 @@ public class User {
     @DBRef
     private UserProfile userProfile;
     
-    // List of user IDs that this user follows
     private List<String> following = new ArrayList<>();
     
-    // List of user IDs that follow this user
     private List<String> followers = new ArrayList<>();
 
 }

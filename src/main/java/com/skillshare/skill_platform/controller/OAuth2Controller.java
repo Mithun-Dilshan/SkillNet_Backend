@@ -80,7 +80,6 @@ public class OAuth2Controller {
         
         System.out.println("User endpoint called for: " + oauth2User.getName());
         
-        // Get email from OAuth user and fetch complete user data from database
         String email = oauth2User.getAttribute("email");
         if (email != null) {
             Optional<User> userOpt = userRepository.findByEmail(email);
@@ -88,14 +87,12 @@ public class OAuth2Controller {
                 User user = userOpt.get();
                 Map<String, Object> userData = new HashMap<>();
                 
-                // Add all user fields to the response
                 userData.put("id", user.getId());
                 userData.put("name", user.getName());
                 userData.put("email", user.getEmail());
                 userData.put("oauthProvider", user.getOauthProvider());
                 userData.put("oauthId", user.getOauthId());
                 
-                // Add profile information if available
                 if (user.getUserProfile() != null) {
                     Map<String, Object> profileData = new HashMap<>();
                     profileData.put("id", user.getUserProfile().getId());
@@ -106,7 +103,6 @@ public class OAuth2Controller {
                     userData.put("userProfile", profileData);
                 }
                 
-                // Add followers and following information
                 userData.put("followers", user.getFollowers());
                 userData.put("following", user.getFollowing());
                 

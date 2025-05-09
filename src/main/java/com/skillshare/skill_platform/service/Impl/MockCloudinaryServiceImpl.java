@@ -15,7 +15,6 @@ public class MockCloudinaryServiceImpl implements CloudinaryService {
 
     @Override
     public String uploadFile(MultipartFile file, String folderName) {
-        // Generate a random file name for development
         String fileName = UUID.randomUUID().toString();
         String extension = getFileExtension(file.getOriginalFilename());
         return "https://mock-cloudinary-url.com/" + folderName + "/" + fileName + "." + extension;

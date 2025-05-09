@@ -46,7 +46,6 @@ public class AuthController {
             response.put("message", "Login successful");
             response.put("token", token);
             
-            // Create a user map with all user fields for the response
             Map<String, Object> userMap = new HashMap<>();
             userMap.put("id", user.getId());
             userMap.put("name", user.getName());
@@ -54,14 +53,11 @@ public class AuthController {
             userMap.put("oauthProvider", user.getOauthProvider());
             userMap.put("oauthId", user.getOauthId());
             
-            // Add profile information if available
             if (user.getUserProfile() != null) {
                 UserProfile profile = user.getUserProfile();
                 userMap.put("userProfile", profile);
             }
-            
-            // Add followers and following information
-            userMap.put("followers", user.getFollowers());
+                        userMap.put("followers", user.getFollowers());
             userMap.put("following", user.getFollowing());
             
             response.put("user", userMap);
@@ -122,13 +118,11 @@ public class AuthController {
         userMap.put("oauthProvider", newUser.getOauthProvider());
         userMap.put("oauthId", newUser.getOauthId());
         
-        // Add profile information if available
         if (newUser.getUserProfile() != null) {
             UserProfile profile = newUser.getUserProfile();
             userMap.put("userProfile", profile);
         }
         
-        // Add followers and following information
         userMap.put("followers", newUser.getFollowers());
         userMap.put("following", newUser.getFollowing());
         
@@ -137,9 +131,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
     
-    /**
-     * Logout
-     */
+   
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout() {
         Map<String, Object> response = new HashMap<>();

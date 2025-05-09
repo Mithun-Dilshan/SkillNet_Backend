@@ -63,7 +63,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 email = oauth2User.getAttribute("email");
                 profilePictureUrl = oauth2User.getAttribute("picture");
                 
-                // Try to get actual user ID from the database
                 if (email != null) {
                     Optional<User> userOpt = userRepository.findByEmail(email);
                     if (userOpt.isPresent()) {
@@ -78,7 +77,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     }
                 }
                 
-                // If we couldn't find the user in the database, use the OAuth user name as a fallback
                 if (userId == null) {
                     userId = oauth2User.getName();
                 }
@@ -88,7 +86,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 });
             }
             
-            // URL encode the userDisplayName to handle special characters
             String encodedUserName = URLEncoder.encode(userDisplayName, StandardCharsets.UTF_8.toString());
             String encodedEmail = email != null ? URLEncoder.encode(email, StandardCharsets.UTF_8.toString()) : null;
             String encodedPictureUrl = profilePictureUrl != null ? URLEncoder.encode(profilePictureUrl, StandardCharsets.UTF_8.toString()) : null;
@@ -98,7 +95,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .queryParam("userId", userId)
                     .queryParam("userName", encodedUserName);
             
-            // Add email and profile picture if available
             if (encodedEmail != null) {
                 uriBuilder.queryParam("email", encodedEmail);
             }

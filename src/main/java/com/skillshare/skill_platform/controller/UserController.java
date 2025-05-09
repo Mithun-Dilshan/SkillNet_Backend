@@ -49,7 +49,6 @@ public class UserController {
         logger.info("GET request for profile of user: " + userId);
         
         try {
-            // First try to find the user
             User user = userService.findUserByAnyIdentifier(userId);
             if (user == null) {
                 logger.warning("User not found with identifier: " + userId);
@@ -61,17 +60,14 @@ public class UserController {
                 return ResponseEntity.ok(profile);
             } catch (Exception e) {
                 logger.severe("Error getting profile for user " + userId + ": " + e.getMessage());
-                // If the user exists but the profile doesn't, create a minimal profile
                 UserProfileDTO minimalProfile = new UserProfileDTO();
                 minimalProfile.setUserId(user.getId());
                 minimalProfile.setFullName(user.getName());
                 
-                // Create the profile in the database
                 logger.info("Creating minimal profile for user: " + user.getId());
                 return ResponseEntity.ok(userService.createOrUpdateProfile(user.getId(), minimalProfile));
             }
         } catch (ResponseStatusException rse) {
-            // Rethrow ResponseStatusException
             throw rse;
         } catch (Exception e) {
             logger.severe("Unexpected error getting profile for user " + userId + ": " + e.getMessage());
@@ -95,7 +91,6 @@ public class UserController {
     @DeleteMapping("/{userId}/profile")
     public ResponseEntity<Void> deleteProfile(@PathVariable String userId) {
         logger.info("DELETE request for profile of user: " + userId);
-        // Profile deletion is not implemented yet, but returns success for API compatibility
         return ResponseEntity.noContent().build();
     }
     
@@ -126,28 +121,22 @@ public class UserController {
         try {
             java.util.List<UserProfileDTO> users = userService.getAllUsers();
             
-            // If currentUserId is provided, check follow status for each user
             if (currentUserId != null && !currentUserId.isEmpty()) {
-                // First find the actual user by any identifier
                 User currentUser = userService.findUserByAnyIdentifier(currentUserId);
                 
                 if (currentUser != null) {
                     String actualCurrentUserId = currentUser.getId();
                     logger.info("Found current user: " + currentUserId + ", actual ID: " + actualCurrentUserId);
                     
-                    // Get the user's following list once (more efficient)
                     List<String> followingList = currentUser.getFollowing();
                     if (followingList != null) {
-                        // Create a set for faster lookups
                         Set<String> followingSet = new java.util.HashSet<>(followingList);
                         
-                        // Check following status for all users at once
                         for (UserProfileDTO user : users) {
                             boolean isFollowing = followingSet.contains(user.getUserId());
                             user.setFollowing(isFollowing);
                         }
                     } else {
-                        // If following list is null, no users are followed
                         for (UserProfileDTO user : users) {
                             user.setFollowing(false);
                         }
@@ -173,7 +162,6 @@ public class UserController {
         logger.info("POST request for user " + userId + " to follow user " + targetUserId);
         
         try {
-            // First, find the actual user objects by any identifier (could be username or ID)
             User follower = userService.findUserByAnyIdentifier(userId);
             User target = userService.findUserByAnyIdentifier(targetUserId);
             
@@ -187,7 +175,6 @@ public class UserController {
                 return ResponseEntity.badRequest().body("Target user not found");
             }
             
-            // Use actual MongoDB IDs for the follow operation
             boolean success = userService.followUser(follower.getId(), target.getId());
             
             if (success) {
@@ -210,7 +197,6 @@ public class UserController {
         logger.info("POST request for user " + userId + " to unfollow user " + targetUserId);
         
         try {
-            // First, find the actual user objects by any identifier (could be username or ID)
             User follower = userService.findUserByAnyIdentifier(userId);
             User target = userService.findUserByAnyIdentifier(targetUserId);
             
@@ -224,7 +210,6 @@ public class UserController {
                 return ResponseEntity.badRequest().body("Target user not found");
             }
             
-            // Use actual MongoDB IDs for the unfollow operation
             boolean success = userService.unfollowUser(follower.getId(), target.getId());
             
             if (success) {
@@ -251,7 +236,6 @@ public class UserController {
             (currentUserId != null ? currentUserId : "none"));
         
         try {
-            // First try to find both users
             User targetUser = userService.findUserByAnyIdentifier(userId);
             User currentUser = null;
             
@@ -264,10 +248,8 @@ public class UserController {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with identifier: " + userId);
             }
             
-            // Get the profile
             UserProfileDTO profile = userService.getProfile(targetUser.getId());
             
-            // Check follow status if we have a current user
             if (currentUser != null) {
                 if (currentUser.getFollowing() != null) {
                     boolean isFollowing = currentUser.getFollowing().contains(targetUser.getId());
@@ -279,7 +261,6 @@ public class UserController {
             
             return ResponseEntity.ok(profile);
         } catch (ResponseStatusException rse) {
-            // Rethrow ResponseStatusException
             throw rse;
         } catch (Exception e) {
             logger.severe("Unexpected error getting profile with status: " + e.getMessage());
@@ -297,14 +278,12 @@ public class UserController {
                 User user = userOpt.get();
                 Map<String, Object> userData = new HashMap<>();
                 
-                // Add all user fields to the response
                 userData.put("id", user.getId());
                 userData.put("name", user.getName());
                 userData.put("email", user.getEmail());
                 userData.put("oauthProvider", user.getOauthProvider());
                 userData.put("oauthId", user.getOauthId());
                 
-                // Add profile information if available
                 if (user.getUserProfile() != null) {
                     Map<String, Object> profileData = new HashMap<>();
                     profileData.put("id", user.getUserProfile().getId());
@@ -315,7 +294,6 @@ public class UserController {
                     userData.put("userProfile", profileData);
                 }
                 
-                // Add followers and following information
                 userData.put("followers", user.getFollowers());
                 userData.put("following", user.getFollowing());
                 
