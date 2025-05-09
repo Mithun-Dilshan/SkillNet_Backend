@@ -9,19 +9,27 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.skillshare.skill_platform.dto.UserProfileDTO;
 import com.skillshare.skill_platform.entity.User;
+import com.skillshare.skill_platform.repository.UserRepository;
 import com.skillshare.skill_platform.service.UserService;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.List;
 import java.util.Set;
 
 @RestController
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 @RequestMapping("/api/users")
 public class UserController {
     private static final Logger logger = Logger.getLogger(UserController.class.getName());
 
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     @PostMapping("/{userId}/profile")
     public ResponseEntity<UserProfileDTO> createOrUpdateProfile(@PathVariable String userId, @RequestBody UserProfileDTO profileDTO) {
@@ -276,6 +284,48 @@ public class UserController {
         } catch (Exception e) {
             logger.severe("Unexpected error getting profile with status: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error retrieving profile: " + e.getMessage(), e);
+        }
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<Map<String, Object>> getUserById(@PathVariable String userId) {
+        logger.info("GET request for user ID: " + userId);
+        
+        try {
+            Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                Map<String, Object> userData = new HashMap<>();
+                
+                // Add all user fields to the response
+                userData.put("id", user.getId());
+                userData.put("name", user.getName());
+                userData.put("email", user.getEmail());
+                userData.put("oauthProvider", user.getOauthProvider());
+                userData.put("oauthId", user.getOauthId());
+                
+                // Add profile information if available
+                if (user.getUserProfile() != null) {
+                    Map<String, Object> profileData = new HashMap<>();
+                    profileData.put("id", user.getUserProfile().getId());
+                    profileData.put("fullName", user.getUserProfile().getFullName());
+                    profileData.put("profilePictureUrl", user.getUserProfile().getProfilePictureUrl());
+                    profileData.put("bio", user.getUserProfile().getBio());
+                    profileData.put("userId", user.getUserProfile().getUserId());
+                    userData.put("userProfile", profileData);
+                }
+                
+                // Add followers and following information
+                userData.put("followers", user.getFollowers());
+                userData.put("following", user.getFollowing());
+                
+                return ResponseEntity.ok(userData);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            logger.severe("Error fetching user with ID " + userId + ": " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching user: " + e.getMessage(), e);
         }
     }
 }

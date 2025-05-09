@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.skillshare.skill_platform.entity.User;
+import com.skillshare.skill_platform.entity.UserProfile;
 import com.skillshare.skill_platform.repository.UserRepository;
 import com.skillshare.skill_platform.service.UserService;
 
@@ -44,11 +45,26 @@ public class AuthController {
             response.put("success", true);
             response.put("message", "Login successful");
             response.put("token", token);
-            response.put("user", Map.of(
-                "id", user.getId(),
-                "name", user.getName(),
-                "email", user.getEmail()
-            ));
+            
+            // Create a user map with all user fields for the response
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("id", user.getId());
+            userMap.put("name", user.getName());
+            userMap.put("email", user.getEmail());
+            userMap.put("oauthProvider", user.getOauthProvider());
+            userMap.put("oauthId", user.getOauthId());
+            
+            // Add profile information if available
+            if (user.getUserProfile() != null) {
+                UserProfile profile = user.getUserProfile();
+                userMap.put("userProfile", profile);
+            }
+            
+            // Add followers and following information
+            userMap.put("followers", user.getFollowers());
+            userMap.put("following", user.getFollowing());
+            
+            response.put("user", userMap);
             
             return ResponseEntity.ok(response);
         } else {
@@ -97,11 +113,26 @@ public class AuthController {
         response.put("success", true);
         response.put("message", "Registration successful");
         response.put("token", token);
-        response.put("user", Map.of(
-            "id", newUser.getId(),
-            "name", newUser.getName(),
-            "email", newUser.getEmail()
-        ));
+        
+        // Create a user map with all user fields for the response
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("id", newUser.getId());
+        userMap.put("name", newUser.getName());
+        userMap.put("email", newUser.getEmail());
+        userMap.put("oauthProvider", newUser.getOauthProvider());
+        userMap.put("oauthId", newUser.getOauthId());
+        
+        // Add profile information if available
+        if (newUser.getUserProfile() != null) {
+            UserProfile profile = newUser.getUserProfile();
+            userMap.put("userProfile", profile);
+        }
+        
+        // Add followers and following information
+        userMap.put("followers", newUser.getFollowers());
+        userMap.put("following", newUser.getFollowing());
+        
+        response.put("user", userMap);
         
         return ResponseEntity.ok(response);
     }
