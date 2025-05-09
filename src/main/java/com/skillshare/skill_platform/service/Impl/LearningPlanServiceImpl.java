@@ -114,15 +114,12 @@ public class LearningPlanServiceImpl implements LearningPlanService {
             () -> new ResourceNotFoundException(
                 "Not found learning plan with id: " + learningPlanId));
 
-    // Save the original userId to ensure it's not overwritten
     String originalUserId = learningPlan.getUserId();
     Integer originalFollowers = learningPlan.getFollowers();
     Boolean originalFollowing = learningPlan.getFollowing();
     
-    // Update the learning plan with the incoming data
     BeanUtils.copyProperties(rq, learningPlan);
     
-    // Ensure important fields are preserved
     learningPlan.setUserId(originalUserId);
     if (rq.getFollowers() == null) {
       learningPlan.setFollowers(originalFollowers);
@@ -131,11 +128,9 @@ public class LearningPlanServiceImpl implements LearningPlanService {
       learningPlan.setFollowing(originalFollowing);
     }
     
-    // Process topics to ensure correct status conversion
     if (rq.getTopics() != null) {
       for (Topic topic : learningPlan.getTopics()) {
-        // Make sure the completed/status values are properly synchronized
-        // This ensures the boolean 'completed' field from frontend maps to TopicStatus enum
+      
         boolean isCompleted = topic.isCompleted();
         topic.setCompleted(isCompleted);
       }
@@ -197,9 +192,8 @@ public class LearningPlanServiceImpl implements LearningPlanService {
           .userId(learningPlan.getUserId())
           .following(learningPlan.getFollowing())
           .completionPercentage(learningPlan.getCompletionPercentage())
-          .build(); // Build the initial response
+          .build(); 
     
-      // Try to get user information, but continue even if not found
       try {
         if (learningPlan.getUserId() != null) {
           User user = userRepository.findById(learningPlan.getUserId())
@@ -232,14 +226,12 @@ public class LearningPlanServiceImpl implements LearningPlanService {
                 .user(userDTO)
                 .build();
           } else {
-            // Create a placeholder user if not found
             UserDTO placeholderUser = UserDTO.builder()
                 .id(learningPlan.getUserId())
                 .name("Unknown User")
                 .username("unknown@example.com")
                 .build();
                 
-            // Create a new response with the placeholder user
             response = LearningPlanResponse.builder()
                 .id(response.getId())
                 .title(response.getTitle())
@@ -260,14 +252,12 @@ public class LearningPlanServiceImpl implements LearningPlanService {
         }
       } catch (Exception e) {
         System.err.println("Error fetching user for learning plan: " + e.getMessage());
-        // Create a placeholder user on error
         UserDTO placeholderUser = UserDTO.builder()
             .id(learningPlan.getUserId())
             .name("Unknown User")
             .username("unknown@example.com")
             .build();
             
-        // Create a new response with the placeholder user
         response = LearningPlanResponse.builder()
             .id(response.getId())
             .title(response.getTitle())

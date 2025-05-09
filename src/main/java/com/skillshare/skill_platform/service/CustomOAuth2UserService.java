@@ -60,8 +60,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (userOptional.isPresent()) {
             user = userOptional.get();
             
-            // Update user information if needed
-            user = updateExistingUser(user, oAuth2UserInfo);
+            user = updateExistingUser(user, oAuth2UserRequest, oAuth2UserInfo);
         } else {
             user = registerNewUser(oAuth2UserRequest, oAuth2UserInfo);
         }
@@ -73,7 +72,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return new DefaultOAuth2User(
             Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
             attributes,
-            "name" // Use the name attribute as the name attribute key
+            "name" 
         );
     }
 
@@ -81,17 +80,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         try {
             System.out.println("Registering new user with email: " + oAuth2UserInfo.getEmail());
             
-            // First create and save the User to get an ID
             User user = new User();
             user.setEmail(oAuth2UserInfo.getEmail());
+            user.setName(oAuth2UserInfo.getName()); 
             user.setOauthProvider(oAuth2UserRequest.getClientRegistration().getRegistrationId());
             user.setOauthId(oAuth2UserInfo.getId());
             user = userRepository.save(user);
             System.out.println("Created new user with ID: " + user.getId());
             
-            // Then create and save UserProfile
             UserProfile userProfile = new UserProfile();
-            userProfile.setUserId(user.getId());
+            userProfile.setUserId(user.getId());  
             userProfile.setFullName(oAuth2UserInfo.getName());
             if (oAuth2UserInfo.getImageUrl() != null) {
                 userProfile.setProfilePictureUrl(oAuth2UserInfo.getImageUrl());
@@ -99,7 +97,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             userProfile = userProfileRepository.save(userProfile);
             System.out.println("Created UserProfile with ID: " + userProfile.getId());
             
-            // Now set the saved UserProfile to User and save again
             user.setUserProfile(userProfile);
             return userRepository.save(user);
         } catch (Exception e) {
@@ -109,31 +106,49 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
     }
 
-    private User updateExistingUser(User existingUser, OAuth2UserInfo oAuth2UserInfo) {
+    private User updateExistingUser(User existingUser, OAuth2UserRequest oAuth2UserRequest, OAuth2UserInfo oAuth2UserInfo) {
         try {
             System.out.println("Updating existing user: " + existingUser.getId());
+            
+            if (existingUser.getName() == null || existingUser.getName().isEmpty()) {
+                existingUser.setName(oAuth2UserInfo.getName());
+            }
+            
+            if (existingUser.getOauthId() == null) {
+                existingUser.setOauthId(oAuth2UserInfo.getId());
+            }
+            
+            if (existingUser.getOauthProvider() == null) {
+                existingUser.setOauthProvider(oAuth2UserRequest.getClientRegistration().getRegistrationId());
+            }
             
             UserProfile userProfile = existingUser.getUserProfile();
             if (userProfile == null) {
                 System.out.println("Creating new UserProfile for existing user");
-                userProfile = new UserProfile();
-                userProfile.setUserId(existingUser.getId());
                 
-                // Save UserProfile first to get an ID
-                userProfile = userProfileRepository.save(userProfile);
+                userProfile = userProfileRepository.findByUserId(existingUser.getId());
+                
+                if (userProfile == null) {
+                    userProfile = new UserProfile();
+                    userProfile.setUserId(existingUser.getId());
+                    
+                    userProfile.setFullName(oAuth2UserInfo.getName());
+                } else {
+                    System.out.println("Found existing profile for user: " + userProfile.getId());
+                }
+            } else {
+                if (userProfile.getFullName() == null || userProfile.getFullName().isEmpty()) {
+                    userProfile.setFullName(oAuth2UserInfo.getName());
+                }
             }
             
-            // Update profile properties
-            userProfile.setFullName(oAuth2UserInfo.getName());
             if (oAuth2UserInfo.getImageUrl() != null) {
                 userProfile.setProfilePictureUrl(oAuth2UserInfo.getImageUrl());
             }
             
-            // Save the updated profile
             userProfile = userProfileRepository.save(userProfile);
             System.out.println("Updated UserProfile: " + userProfile.getId());
             
-            // Set and save User
             existingUser.setUserProfile(userProfile);
             return userRepository.save(existingUser);
         } catch (Exception e) {

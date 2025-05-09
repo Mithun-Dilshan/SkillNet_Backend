@@ -15,4 +15,8 @@ public interface PostService {
     ResponseEntity<Map> unlikePost(String postId, String userId);
     ResponseEntity<Map> savePost(String postId, String userId);
     ResponseEntity<Map> unsavePost(String postId, String userId);
+<<<<<<< HEAD
+=======
+    ResponseEntity<Map> getPostsByUserId(String userId);
+>>>>>>> main
 } 

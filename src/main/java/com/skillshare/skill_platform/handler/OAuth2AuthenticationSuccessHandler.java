@@ -3,6 +3,7 @@ package com.skillshare.skill_platform.handler;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -11,7 +12,13 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.skillshare.skill_platform.entity.User;
+import com.skillshare.skill_platform.repository.UserRepository;
+
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -19,6 +26,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     @Value("${app.oauth2.authorizedRedirectUris}")
     private String[] authorizedRedirectUris;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, 
@@ -40,23 +50,60 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             Object principal = authentication.getPrincipal();
             System.out.println("Authentication principal type: " + (principal != null ? principal.getClass().getName() : "null"));
             String userId = null;
+            String userDisplayName = null;
+            String email = null;
+            String profilePictureUrl = null;
             
             if (principal instanceof OAuth2User) {
                 OAuth2User oauth2User = (OAuth2User) principal;
                 System.out.println("OAuth2User attributes: " + oauth2User.getAttributes());
                 System.out.println("OAuth2User name: " + oauth2User.getName());
                 
-                userId = oauth2User.getName();
+                userDisplayName = oauth2User.getName();
+                email = oauth2User.getAttribute("email");
+                profilePictureUrl = oauth2User.getAttribute("picture");
+                
+                if (email != null) {
+                    Optional<User> userOpt = userRepository.findByEmail(email);
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        userId = user.getId();
+                        userDisplayName = user.getName();
+                        
+                        // Get profile picture from user profile if available
+                        if (user.getUserProfile() != null && user.getUserProfile().getProfilePictureUrl() != null) {
+                            profilePictureUrl = user.getUserProfile().getProfilePictureUrl();
+                        }
+                    }
+                }
+                
+                if (userId == null) {
+                    userId = oauth2User.getName();
+                }
                 
                 oauth2User.getAttributes().forEach((key, value) -> {
                     System.out.println("  Attribute: " + key + " = " + value + (value == null ? " (NULL)" : ""));
                 });
             }
             
-            String redirectUrl = UriComponentsBuilder.fromUriString(authorizedRedirectUris[0])
+            String encodedUserName = URLEncoder.encode(userDisplayName, StandardCharsets.UTF_8.toString());
+            String encodedEmail = email != null ? URLEncoder.encode(email, StandardCharsets.UTF_8.toString()) : null;
+            String encodedPictureUrl = profilePictureUrl != null ? URLEncoder.encode(profilePictureUrl, StandardCharsets.UTF_8.toString()) : null;
+            
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(authorizedRedirectUris[0])
                     .queryParam("token", token)
                     .queryParam("userId", userId)
-                    .build().toUriString();
+                    .queryParam("userName", encodedUserName);
+            
+            if (encodedEmail != null) {
+                uriBuilder.queryParam("email", encodedEmail);
+            }
+            
+            if (encodedPictureUrl != null) {
+                uriBuilder.queryParam("profilePictureUrl", encodedPictureUrl);
+            }
+            
+            String redirectUrl = uriBuilder.build().toUriString();
             
             System.out.println("Redirecting to: " + redirectUrl);
             

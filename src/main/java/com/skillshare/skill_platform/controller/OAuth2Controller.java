@@ -15,8 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
+import com.skillshare.skill_platform.entity.User;
+import com.skillshare.skill_platform.repository.UserRepository;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -26,6 +30,8 @@ public class OAuth2Controller {
     @Value("${app.oauth2.authorizedRedirectUris}")
     private String[] authorizedRedirectUris;
     
+    @Autowired
+    private UserRepository userRepository;
 
     private static final Map<String, String> codeToTokenMap = new HashMap<>();
 
@@ -71,7 +77,40 @@ public class OAuth2Controller {
             System.out.println("User endpoint called but oauth2User is null");
             return new HashMap<>();
         }
+        
         System.out.println("User endpoint called for: " + oauth2User.getName());
+        
+        String email = oauth2User.getAttribute("email");
+        if (email != null) {
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                Map<String, Object> userData = new HashMap<>();
+                
+                userData.put("id", user.getId());
+                userData.put("name", user.getName());
+                userData.put("email", user.getEmail());
+                userData.put("oauthProvider", user.getOauthProvider());
+                userData.put("oauthId", user.getOauthId());
+                
+                if (user.getUserProfile() != null) {
+                    Map<String, Object> profileData = new HashMap<>();
+                    profileData.put("id", user.getUserProfile().getId());
+                    profileData.put("fullName", user.getUserProfile().getFullName());
+                    profileData.put("profilePictureUrl", user.getUserProfile().getProfilePictureUrl());
+                    profileData.put("bio", user.getUserProfile().getBio());
+                    profileData.put("userId", user.getUserProfile().getUserId());
+                    userData.put("userProfile", profileData);
+                }
+                
+                userData.put("followers", user.getFollowers());
+                userData.put("following", user.getFollowing());
+                
+                return userData;
+            }
+        }
+        
+        // Fallback to just returning the OAuth attributes if user not found in database
         return oauth2User.getAttributes();
     }
     

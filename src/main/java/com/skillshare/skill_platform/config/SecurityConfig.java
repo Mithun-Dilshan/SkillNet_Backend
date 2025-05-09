@@ -45,7 +45,11 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers("/api/auth/**", "/api/oauth2/**", "/oauth2/**", "/login/oauth2/code/*").permitAll()
                 .requestMatchers("/api/user/register", "/api/user/login").permitAll()
+<<<<<<< HEAD
 =                .requestMatchers("/api/posts/**").permitAll()
+=======
+                .requestMatchers("/api/posts/**").permitAll()
+>>>>>>> main
                 .requestMatchers("/api/comments/**").permitAll()
                 .requestMatchers("/api/user/**").permitAll()
                 .requestMatchers("/api/resources/**").permitAll()
@@ -56,8 +60,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/comments/public/**").permitAll()
                 .requestMatchers("/api/resources/public/**").permitAll()
                 .requestMatchers("/api/topics/public/**").permitAll()
+<<<<<<< HEAD
                  .requestMatchers("/api/learning-plans/**").permitAll()
 
+=======
+                .requestMatchers("/api/learning-plans/**").permitAll()
+                .requestMatchers("/api/users/**").permitAll()
+>>>>>>> main
 
                 .anyRequest().authenticated()
             )
