@@ -61,7 +61,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user = userOptional.get();
             
             // Update user information if needed
-            user = updateExistingUser(user, oAuth2UserInfo);
+            user = updateExistingUser(user, oAuth2UserRequest, oAuth2UserInfo);
         } else {
             user = registerNewUser(oAuth2UserRequest, oAuth2UserInfo);
         }
@@ -84,14 +84,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // First create and save the User to get an ID
             User user = new User();
             user.setEmail(oAuth2UserInfo.getEmail());
+            user.setName(oAuth2UserInfo.getName()); // Set name from OAuth provider
             user.setOauthProvider(oAuth2UserRequest.getClientRegistration().getRegistrationId());
             user.setOauthId(oAuth2UserInfo.getId());
             user = userRepository.save(user);
             System.out.println("Created new user with ID: " + user.getId());
             
-            // Then create and save UserProfile
+            // Then create and save UserProfile - use MongoDB-generated ID
             UserProfile userProfile = new UserProfile();
-            userProfile.setUserId(user.getId());
+            userProfile.setUserId(user.getId());  // Important: Use the MongoDB-generated ID
             userProfile.setFullName(oAuth2UserInfo.getName());
             if (oAuth2UserInfo.getImageUrl() != null) {
                 userProfile.setProfilePictureUrl(oAuth2UserInfo.getImageUrl());
@@ -109,22 +110,49 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
     }
 
-    private User updateExistingUser(User existingUser, OAuth2UserInfo oAuth2UserInfo) {
+    private User updateExistingUser(User existingUser, OAuth2UserRequest oAuth2UserRequest, OAuth2UserInfo oAuth2UserInfo) {
         try {
             System.out.println("Updating existing user: " + existingUser.getId());
+            
+            // Make sure name is set
+            if (existingUser.getName() == null || existingUser.getName().isEmpty()) {
+                existingUser.setName(oAuth2UserInfo.getName());
+            }
+            
+            // Make sure OAuth ID and provider are set/updated
+            if (existingUser.getOauthId() == null) {
+                existingUser.setOauthId(oAuth2UserInfo.getId());
+            }
+            
+            if (existingUser.getOauthProvider() == null) {
+                existingUser.setOauthProvider(oAuth2UserRequest.getClientRegistration().getRegistrationId());
+            }
             
             UserProfile userProfile = existingUser.getUserProfile();
             if (userProfile == null) {
                 System.out.println("Creating new UserProfile for existing user");
-                userProfile = new UserProfile();
-                userProfile.setUserId(existingUser.getId());
                 
-                // Save UserProfile first to get an ID
-                userProfile = userProfileRepository.save(userProfile);
+                // Check if there's already a profile for this user in the database
+                userProfile = userProfileRepository.findByUserId(existingUser.getId());
+                
+                if (userProfile == null) {
+                    // Create new profile if none exists
+                    userProfile = new UserProfile();
+                    userProfile.setUserId(existingUser.getId());
+                    
+                    // Set the full name from OAuth provider
+                    userProfile.setFullName(oAuth2UserInfo.getName());
+                } else {
+                    System.out.println("Found existing profile for user: " + userProfile.getId());
+                }
+            } else {
+                // Update profile properties if fullName is missing
+                if (userProfile.getFullName() == null || userProfile.getFullName().isEmpty()) {
+                    userProfile.setFullName(oAuth2UserInfo.getName());
+                }
             }
             
-            // Update profile properties
-            userProfile.setFullName(oAuth2UserInfo.getName());
+            // Always update the profile picture URL if available
             if (oAuth2UserInfo.getImageUrl() != null) {
                 userProfile.setProfilePictureUrl(oAuth2UserInfo.getImageUrl());
             }
