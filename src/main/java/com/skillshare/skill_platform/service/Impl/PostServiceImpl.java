@@ -176,7 +176,10 @@ public class PostServiceImpl implements PostService {
             if (optionalPost.isPresent()) {
                 Post post = optionalPost.get();
                 
+<<<<<<< HEAD
                 // Check if user already liked this post
+=======
+>>>>>>> main
                 boolean alreadyLiked = post.getLikes().stream()
                     .anyMatch(like -> like.getUserId().equals(userId));
                 
@@ -249,12 +252,18 @@ public class PostServiceImpl implements PostService {
 
             Post post = optionalPost.get();
             
+<<<<<<< HEAD
             // Initialize savedByUsers if null
+=======
+>>>>>>> main
             if (post.getSavedByUsers() == null) {
                 post.setSavedByUsers(new ArrayList<>());
             }
             
+<<<<<<< HEAD
             // Check if already saved by this user
+=======
+>>>>>>> main
             if (!post.getSavedByUsers().contains(userId)) {
                 post.getSavedByUsers().add(userId);
                 System.out.println("Added user " + userId + " to saved list for post " + postId);
@@ -294,7 +303,10 @@ public class PostServiceImpl implements PostService {
 
             Post post = optionalPost.get();
             
+<<<<<<< HEAD
             // Initialize savedByUsers if null
+=======
+>>>>>>> main
             if (post.getSavedByUsers() == null) {
                 post.setSavedByUsers(new ArrayList<>());
                 System.out.println("Post " + postId + " not saved by any user");
@@ -330,4 +342,32 @@ public class PostServiceImpl implements PostService {
                     .body(Map.of("error", "Failed to unsave post: " + e.getMessage()));
         }
     }
+<<<<<<< HEAD
+=======
+    
+    @Override
+    public ResponseEntity<Map> getPostsByUserId(String userId) {
+        try {
+            System.out.println("Fetching posts for user: " + userId);
+            
+            if (userId == null || userId.isEmpty()) {
+                System.err.println("Failed to fetch posts: userId is empty");
+                return ResponseEntity.badRequest().body(Map.of("error", "User ID cannot be empty"));
+            }
+            
+            List<Post> posts = postRepository.findByUserId(userId);
+            
+            posts.sort((a, b) -> b.getDate().compareTo(a.getDate()));
+            
+            System.out.println("Found " + posts.size() + " posts for user: " + userId);
+            
+            return ResponseEntity.ok().body(Map.of("posts", posts));
+        } catch (Exception e) {
+            System.err.println("Failed to fetch posts for user: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to fetch posts: " + e.getMessage()));
+        }
+    }
+>>>>>>> main
 } 
